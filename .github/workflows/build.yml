@@ -3,47 +3,36 @@ name: Build APK
 on:
   push:
     branches:
-      - main
+      - main  # Сборка запускается при коммите в ветку main
+  workflow_dispatch:  # Позволяет запуск вручную
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-apk:
+    runs-on: ubuntu-latest  # Сборка на Ubuntu
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 1  # Проверить код проекта
 
-    - name: Set up Python
+    - name: Install Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.8'
+        python-version: "3.9"  # Указать версию Python, совместимую с Kivy
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libffi-dev libssl-dev zlib1g-dev
-        pip install --upgrade pip
-        pip install buildozer cython
-
-    - name: Accept Android SDK licenses
-      run: |
-        yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses
-
-    - name: Prepare Android SDK
-      run: |
-        mkdir -p ~/.buildozer/android/platform
-        buildozer android update
+    - name: Setup Buildozer
+      uses: ArtemSBulgakov/buildozer-action@v2
+      with:
+        requirements: python3,kivy  # Зависимости из buildozer.spec
 
     - name: Build APK
       run: |
+        cd ${{ github.workspace }}
         buildozer android debug
 
     - name: Upload APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: APK
-        path: bin/*.apk   - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: APK
-        path: bin/*.apk # Загружаем APK как артефакт
+        path: bin/*.apk  # Загрузка собранного APK
