@@ -48,7 +48,7 @@ jobs:
         export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
 
         # Accept SDK licenses and install components
-        yes | sdkmanager --licenses || echo "Licenses accepted"
+        y|sdkmanager --licenses || echo "Licenses accepted"
         sdkmanager "platform-tools" "build-tools;36.0.0" "platforms;android-33" "sources;android-33" "extras;android;m2repository"
 
     - name: Build APK using Buildozer
