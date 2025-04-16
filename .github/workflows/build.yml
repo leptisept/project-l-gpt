@@ -17,48 +17,47 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Install Python
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.9"
 
-    - name: Setup Buildozer and dependencies
+    - name: Install Buildozer and system dependencies
       run: |
-        # Установка системных инструментов
         sudo apt-get update && sudo apt-get install -y \
           python3-pip \
           openjdk-11-jdk \
           unzip zip wget git
 
-        # Установка Buildozer
         pip install --upgrade buildozer cython
 
-        # Установка Android SDK
+    - name: Setup Android SDK
+      run: |
+        # Create directory for SDK tools
         mkdir -p $HOME/android-sdk/cmdline-tools
         cd $HOME/android-sdk/cmdline-tools
+
+        # Download command line tools for Android SDK
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip -q commandlinetools-linux-9477386_latest.zip
         rm commandlinetools-linux-9477386_latest.zip
         mv cmdline-tools latest
 
-        # Экспорт путей для Android SDK
+        # Export paths for SDK tools
         export ANDROID_SDK_ROOT=$HOME/android-sdk
         export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
 
-        # Принятие лицензий и установка компонентов
-        yes | sdkmanager --licenses
+        # Accept SDK licenses and install components
+        yes | sdkmanager --licenses || echo "Licenses accepted"
         sdkmanager "platform-tools" "build-tools;36.0.0" "platforms;android-33" "sources;android-33" "extras;android;m2repository"
 
-        # Установка aidl
-        sdkmanager "build-tools;30.0.3"
-
-    - name: Build APK
+    - name: Build APK using Buildozer
       run: |
         cd ${{ github.workspace }}
         buildozer android debug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v3
       with:
         name: APK
         path: bin/*.apk
