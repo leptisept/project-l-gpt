@@ -1,0 +1,41 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main # Сборка будет запускаться при пуше в ветку main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Используем Ubuntu для сборки
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3 # Клонирует репозиторий
+
+    - name: Set up Python
+      uses: actions/setup-python@v4 # Настройка Python
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libffi-dev libssl-dev zlib1g-dev
+        pip install --upgrade pip
+        pip install buildozer cython
+
+    - name: Prepare Android SDK
+      run: |
+        mkdir -p ~/.buildozer/android/platform
+        buildozer android update # Устанавливаем Android SDK
+
+    - name: Build APK
+      run: |
+        buildozer android debug # Запускаем сборку APK
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: APK
+        path: bin/*.apk # Загружаем APK как артефакт
