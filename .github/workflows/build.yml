@@ -30,7 +30,7 @@ jobs:
           openjdk-11-jdk \
           unzip zip wget git
 
-        # Установка Buildozer через pip
+        # Установка Buildozer
         pip install --upgrade buildozer cython
 
         # Установка Android SDK
@@ -45,9 +45,12 @@ jobs:
         export ANDROID_SDK_ROOT=$HOME/android-sdk
         export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
 
-        # Принятие всех лицензий и установка компонентов
+        # Принятие лицензий и установка компонентов
         yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-33"
+        sdkmanager "platform-tools" "build-tools;36.0.0" "platforms;android-33" "sources;android-33" "extras;android;m2repository"
+
+        # Установка aidl
+        sdkmanager "build-tools;30.0.3"
 
     - name: Build APK
       run: |
@@ -55,7 +58,7 @@ jobs:
         buildozer android debug
 
     - name: Upload APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: APK
         path: bin/*.apk
