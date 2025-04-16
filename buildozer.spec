@@ -64,3 +64,5 @@ android.entrypoint = org.kivy.android.PythonActivity
 # Поддерживаемые архитектуры. Можно указывать несколько вариантов через запятую.
 android.arch = ar
 meabi-v7a, arm64-v8a
+
+requirements = python3,kivy,numpy
