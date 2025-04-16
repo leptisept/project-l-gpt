@@ -4,27 +4,48 @@ on:
   push:
     branches:
       - main  # Сборка запускается при коммите в ветку main
-  workflow_dispatch:  # Позволяет запуск вручную
+  pull_request:
+    branches:
+      - main  # Сборка при открытии PR в main
+  workflow_dispatch:  # Возможность ручного запуска workflow
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest  # Сборка на Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 1  # Проверить код проекта
 
     - name: Install Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9"  # Указать версию Python, совместимую с Kivy
+        python-version: "3.9"  # Версия Python, совместимая с Kivy
 
-    - name: Setup Buildozer
-      uses: ArtemSBulgakov/buildozer-action@v2
-      with:
-        requirements: python3,kivy  # Зависимости из buildozer.spec
+    - name: Setup Buildozer and dependencies
+      run: |
+        # Установка необходимых системных инструментов
+        sudo apt-get update && sudo apt-get install -y \
+          python3-pip \
+          openjdk-11-jdk \
+          unzip zip wget git
+
+        # Установка Buildozer через pip
+        pip install --upgrade buildozer
+
+        # Установка Android SDK
+        mkdir -p $HOME/android-sdk
+        cd $HOME/android-sdk
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip commandlinetools-linux-9477386_latest.zip -d $HOME/android-sdk
+        mkdir -p cmdline-tools/latest
+        mv $HOME/android-sdk/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest
+
+        # Настройка Android SDK
+        export ANDROID_SDK_ROOT=$HOME/android-sdk
+        export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+        yes | sdkmanager --licenses  # Принятие всех лицензий
+        sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-33"  # Установка Android инструментов
 
     - name: Build APK
       run: |
@@ -35,4 +56,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: APK
-        path: bin/*.apk  # Загрузка собранного APK
+        path: bin/*.apk
